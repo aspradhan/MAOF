@@ -1,0 +1,574 @@
+# MAOF Configuration File
+# Multi-Agent Orchestration Framework v1.0
+
+# ============================================================================
+# System Configuration
+# ============================================================================
+system:
+  name: "MAOF Production Instance"
+  version: "1.0.0"
+  environment: "production"  # development, staging, production
+  log_level: "INFO"  # DEBUG, INFO, WARNING, ERROR, CRITICAL
+  
+  # Performance settings
+  max_concurrent_tasks: 50
+  task_timeout: 300  # seconds
+  default_retry_attempts: 3
+  retry_backoff_factor: 2
+  
+  # Resource limits
+  max_memory_mb: 8192
+  max_tokens_per_request: 100000
+  max_cost_per_day: 1000.00
+
+# ============================================================================
+# Database Configuration
+# ============================================================================
+database:
+  # Primary datastore
+  primary:
+    type: "postgresql"
+    host: "${DB_HOST}"
+    port: 5432
+    database: "maof_production"
+    username: "${DB_USER}"
+    password: "${DB_PASSWORD}"
+    connection_pool_size: 20
+  
+  # Cache layer
+  cache:
+    type: "redis"
+    host: "${REDIS_HOST}"
+    port: 6379
+    password: "${REDIS_PASSWORD}"
+    ttl: 3600  # seconds
+    max_entries: 10000
+  
+  # Vector database for semantic search
+  vector:
+    type: "pinecone"  # pinecone, weaviate, qdrant
+    api_key: "${VECTOR_DB_API_KEY}"
+    environment: "${VECTOR_DB_ENV}"
+    index_name: "maof-embeddings"
+
+# ============================================================================
+# Message Queue Configuration
+# ============================================================================
+message_queue:
+  type: "rabbitmq"  # rabbitmq, kafka, aws_sqs
+  host: "${MQ_HOST}"
+  port: 5672
+  username: "${MQ_USER}"
+  password: "${MQ_PASSWORD}"
+  
+  queues:
+    - name: "high_priority"
+      durable: true
+      max_length: 1000
+      message_ttl: 3600000  # milliseconds
+    
+    - name: "normal_priority"
+      durable: true
+      max_length: 5000
+      message_ttl: 7200000
+    
+    - name: "low_priority"
+      durable: true
+      max_length: 10000
+      message_ttl: 86400000
+
+# ============================================================================
+# Agent Registry
+# ============================================================================
+agents:
+  # OpenAI Agents
+  - id: "openai-gpt4"
+    name: "GPT-4 Turbo"
+    provider: "openai"
+    type: "llm"
+    endpoint: "https://api.openai.com/v1/chat/completions"
+    model: "gpt-4-turbo-preview"
+    api_key: "${OPENAI_API_KEY}"
+    capabilities:
+      - "general_reasoning"
+      - "code_generation"
+      - "creative_writing"
+      - "analysis"
+    constraints:
+      max_tokens: 8192
+      temperature: 0.7
+      rate_limit: 100  # requests per minute
+      timeout: 60
+    cost:
+      input_per_1k: 0.01
+      output_per_1k: 0.03
+    priority: 1
+    enabled: true
+
+  - id: "openai-gpt35"
+    name: "GPT-3.5 Turbo"
+    provider: "openai"
+    type: "llm"
+    endpoint: "https://api.openai.com/v1/chat/completions"
+    model: "gpt-3.5-turbo"
+    api_key: "${OPENAI_API_KEY}"
+    capabilities:
+      - "general_reasoning"
+      - "quick_responses"
+      - "simple_tasks"
+    constraints:
+      max_tokens: 4096
+      temperature: 0.7
+      rate_limit: 200
+      timeout: 30
+    cost:
+      input_per_1k: 0.0005
+      output_per_1k: 0.0015
+    priority: 2
+    enabled: true
+
+  # Anthropic Agents
+  - id: "claude-3-opus"
+    name: "Claude 3 Opus"
+    provider: "anthropic"
+    type: "llm"
+    endpoint: "https://api.anthropic.com/v1/messages"
+    model: "claude-3-opus-20240229"
+    api_key: "${ANTHROPIC_API_KEY}"
+    capabilities:
+      - "deep_analysis"
+      - "code_review"
+      - "complex_reasoning"
+      - "safety_checks"
+    constraints:
+      max_tokens: 100000
+      temperature: 0.5
+      rate_limit: 50
+      timeout: 120
+    cost:
+      input_per_1k: 0.015
+      output_per_1k: 0.075
+    priority: 1
+    enabled: true
+
+  - id: "claude-3-sonnet"
+    name: "Claude 3 Sonnet"
+    provider: "anthropic"
+    type: "llm"
+    endpoint: "https://api.anthropic.com/v1/messages"
+    model: "claude-3-sonnet-20240229"
+    api_key: "${ANTHROPIC_API_KEY}"
+    capabilities:
+      - "balanced_tasks"
+      - "code_generation"
+      - "content_creation"
+    constraints:
+      max_tokens: 100000
+      temperature: 0.5
+      rate_limit: 100
+      timeout: 60
+    cost:
+      input_per_1k: 0.003
+      output_per_1k: 0.015
+    priority: 2
+    enabled: true
+
+  # Google Agents
+  - id: "gemini-pro"
+    name: "Gemini Pro"
+    provider: "google"
+    type: "multimodal"
+    endpoint: "https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent"
+    api_key: "${GOOGLE_API_KEY}"
+    capabilities:
+      - "text_generation"
+      - "image_understanding"
+      - "search_integration"
+      - "multimodal_reasoning"
+    constraints:
+      max_tokens: 32768
+      temperature: 0.6
+      rate_limit: 60
+      timeout: 90
+    cost:
+      input_per_1k: 0.0005
+      output_per_1k: 0.0015
+    priority: 2
+    enabled: true
+
+  # Specialized Agents
+  - id: "deepseek-coder"
+    name: "DeepSeek Coder"
+    provider: "deepseek"
+    type: "code"
+    endpoint: "https://api.deepseek.com/v1/chat/completions"
+    model: "deepseek-coder-33b"
+    api_key: "${DEEPSEEK_API_KEY}"
+    capabilities:
+      - "code_generation"
+      - "code_completion"
+      - "debugging"
+      - "code_explanation"
+    constraints:
+      max_tokens: 16384
+      temperature: 0.3
+      rate_limit: 100
+      timeout: 45
+    cost:
+      input_per_1k: 0.0004
+      output_per_1k: 0.0012
+    priority: 1
+    enabled: true
+
+  - id: "cursor-ai"
+    name: "Cursor AI"
+    provider: "cursor"
+    type: "code"
+    endpoint: "https://api.cursor.ai/v1/complete"
+    api_key: "${CURSOR_API_KEY}"
+    capabilities:
+      - "ide_integration"
+      - "code_completion"
+      - "refactoring"
+      - "test_generation"
+    constraints:
+      max_tokens: 8192
+      temperature: 0.2
+      rate_limit: 150
+      timeout: 30
+    cost:
+      input_per_1k: 0.0003
+      output_per_1k: 0.0009
+    priority: 2
+    enabled: false
+
+  # Image Generation
+  - id: "dalle3"
+    name: "DALL-E 3"
+    provider: "openai"
+    type: "vision"
+    endpoint: "https://api.openai.com/v1/images/generations"
+    api_key: "${OPENAI_API_KEY}"
+    capabilities:
+      - "image_generation"
+      - "creative_visuals"
+    constraints:
+      rate_limit: 10
+      timeout: 60
+      max_resolution: "1024x1024"
+    cost:
+      per_image_1024: 0.040
+      per_image_512: 0.020
+    priority: 1
+    enabled: true
+
+  - id: "stable-diffusion"
+    name: "Stable Diffusion XL"
+    provider: "stability"
+    type: "vision"
+    endpoint: "https://api.stability.ai/v1/generation"
+    api_key: "${STABILITY_API_KEY}"
+    capabilities:
+      - "image_generation"
+      - "style_transfer"
+      - "image_editing"
+    constraints:
+      rate_limit: 30
+      timeout: 45
+      max_resolution: "1024x1024"
+    cost:
+      per_image: 0.020
+    priority: 2
+    enabled: true
+
+  # Audio/Speech
+  - id: "whisper"
+    name: "Whisper Large"
+    provider: "openai"
+    type: "audio"
+    endpoint: "https://api.openai.com/v1/audio/transcriptions"
+    api_key: "${OPENAI_API_KEY}"
+    capabilities:
+      - "speech_to_text"
+      - "audio_transcription"
+      - "language_detection"
+    constraints:
+      max_file_size_mb: 25
+      rate_limit: 50
+      timeout: 120
+    cost:
+      per_minute: 0.006
+    priority: 1
+    enabled: true
+
+# ============================================================================
+# Routing Configuration
+# ============================================================================
+routing:
+  default_strategy: "intelligent"  # round_robin, capability_based, cost_optimized, performance_priority, intelligent
+  
+  # Task type to agent mapping
+  task_mapping:
+    general_query:
+      primary: ["openai-gpt35", "claude-3-sonnet"]
+      fallback: ["gemini-pro"]
+    
+    complex_reasoning:
+      primary: ["claude-3-opus", "openai-gpt4"]
+      fallback: ["gemini-pro", "claude-3-sonnet"]
+    
+    code_generation:
+      primary: ["deepseek-coder", "cursor-ai"]
+      fallback: ["claude-3-opus", "openai-gpt4"]
+    
+    creative_writing:
+      primary: ["openai-gpt4", "claude-3-opus"]
+      fallback: ["claude-3-sonnet", "gemini-pro"]
+    
+    image_generation:
+      primary: ["dalle3"]
+      fallback: ["stable-diffusion"]
+    
+    audio_processing:
+      primary: ["whisper"]
+      fallback: []
+  
+  # Load balancing settings
+  load_balancing:
+    algorithm: "weighted_round_robin"
+    health_check_interval: 30  # seconds
+    failure_threshold: 3
+    recovery_timeout: 60
+
+# ============================================================================
+# Orchestration Patterns
+# ============================================================================
+orchestration:
+  patterns:
+    - name: "simple_chain"
+      description: "Sequential processing through agents"
+      steps:
+        - agent: "auto"
+          action: "process"
+        - agent: "auto"
+          action: "validate"
+        - agent: "auto"
+          action: "format"
+    
+    - name: "parallel_consensus"
+      description: "Multiple agents process in parallel, then consensus"
+      steps:
+        - parallel:
+            - agent: "openai-gpt4"
+              action: "generate"
+            - agent: "claude-3-opus"
+              action: "generate"
+            - agent: "gemini-pro"
+              action: "generate"
+        - agent: "auto"
+          action: "consensus"
+    
+    - name: "hierarchical"
+      description: "Master agent delegates to specialists"
+      steps:
+        - agent: "openai-gpt4"
+          action: "analyze_and_delegate"
+        - conditional:
+            - condition: "task_type == 'code'"
+              agent: "deepseek-coder"
+            - condition: "task_type == 'image'"
+              agent: "dalle3"
+            - default:
+                agent: "claude-3-sonnet"
+
+# ============================================================================
+# Security Configuration
+# ============================================================================
+security:
+  # Authentication
+  auth:
+    enabled: true
+    type: "jwt"  # jwt, api_key, oauth2
+    secret_key: "${AUTH_SECRET_KEY}"
+    token_expiry: 3600  # seconds
+    refresh_token_expiry: 86400
+  
+  # Authorization
+  rbac:
+    enabled: true
+    roles:
+      - name: "admin"
+        permissions: ["*"]
+      
+      - name: "developer"
+        permissions:
+          - "agents:read"
+          - "agents:execute"
+          - "metrics:read"
+      
+      - name: "viewer"
+        permissions:
+          - "agents:read"
+          - "metrics:read"
+  
+  # Rate limiting
+  rate_limiting:
+    enabled: true
+    default_limit: 1000  # requests per hour
+    burst_limit: 50  # requests per minute
+    
+    user_limits:
+      free: 100
+      pro: 1000
+      enterprise: 10000
+  
+  # Content filtering
+  content_filtering:
+    enabled: true
+    filters:
+      - type: "profanity"
+        action: "block"
+      - type: "pii"
+        action: "redact"
+      - type: "malicious_code"
+        action: "block"
+
+# ============================================================================
+# Monitoring & Observability
+# ============================================================================
+monitoring:
+  # Metrics collection
+  metrics:
+    enabled: true
+    provider: "prometheus"
+    endpoint: "http://prometheus:9090"
+    push_interval: 10  # seconds
+    
+    custom_metrics:
+      - name: "agent_latency"
+        type: "histogram"
+        buckets: [0.1, 0.5, 1, 2, 5, 10]
+      
+      - name: "token_usage"
+        type: "counter"
+        labels: ["agent_id", "user_id"]
+      
+      - name: "cost_per_request"
+        type: "gauge"
+        labels: ["agent_id", "task_type"]
+  
+  # Logging
+  logging:
+    provider: "elasticsearch"  # elasticsearch, cloudwatch, stackdriver
+    endpoint: "${LOG_ENDPOINT}"
+    index: "maof-logs"
+    retention_days: 30
+    
+    levels:
+      application: "INFO"
+      agents: "DEBUG"
+      security: "WARNING"
+  
+  # Distributed tracing
+  tracing:
+    enabled: true
+    provider: "jaeger"
+    endpoint: "http://jaeger:14268"
+    sample_rate: 0.1
+  
+  # Alerting
+  alerting:
+    enabled: true
+    provider: "pagerduty"  # pagerduty, opsgenie, slack
+    
+    rules:
+      - name: "high_error_rate"
+        condition: "error_rate > 0.05"
+        severity: "critical"
+        notification_channels: ["pagerduty", "slack"]
+      
+      - name: "agent_down"
+        condition: "agent_availability < 1"
+        severity: "warning"
+        notification_channels: ["slack"]
+      
+      - name: "cost_threshold"
+        condition: "daily_cost > 800"
+        severity: "warning"
+        notification_channels: ["email"]
+
+# ============================================================================
+# Deployment Configuration
+# ============================================================================
+deployment:
+  type: "kubernetes"  # kubernetes, docker_compose, serverless
+  
+  kubernetes:
+    namespace: "maof-production"
+    replicas: 3
+    
+    resources:
+      requests:
+        cpu: "2"
+        memory: "4Gi"
+      limits:
+        cpu: "4"
+        memory: "8Gi"
+    
+    autoscaling:
+      enabled: true
+      min_replicas: 2
+      max_replicas: 10
+      target_cpu_utilization: 70
+    
+    health_check:
+      liveness_probe:
+        path: "/health/live"
+        initial_delay: 30
+        period: 10
+      
+      readiness_probe:
+        path: "/health/ready"
+        initial_delay: 10
+        period: 5
+
+# ============================================================================
+# Backup & Recovery
+# ============================================================================
+backup:
+  enabled: true
+  
+  schedule:
+    full_backup: "0 2 * * 0"  # Weekly at 2 AM Sunday
+    incremental: "0 2 * * 1-6"  # Daily at 2 AM Mon-Sat
+  
+  storage:
+    provider: "s3"  # s3, gcs, azure_blob
+    bucket: "${BACKUP_BUCKET}"
+    region: "${AWS_REGION}"
+    retention_days: 30
+  
+  recovery:
+    rto: 3600  # Recovery Time Objective (seconds)
+    rpo: 300   # Recovery Point Objective (seconds)
+
+# ============================================================================
+# Feature Flags
+# ============================================================================
+features:
+  experimental:
+    agent_memory: false
+    adaptive_routing: false
+    auto_scaling: true
+    predictive_caching: false
+  
+  beta:
+    multi_modal_chain: true
+    cost_optimization: true
+    custom_agents: false
+  
+  stable:
+    basic_routing: true
+    parallel_processing: true
+    result_aggregation: true
+    circuit_breaker: true

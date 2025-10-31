@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MAOF - Multi-Agent Orchestration Framework Architecture</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.26.0/cytoscape.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            overflow: hidden;
+        }
+
+        .container {
+            display: flex;
+            height: 100vh;
+        }
+
+        #cy {
+            flex: 1;
+            background: white;
+            border-radius: 10px;
+            margin: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+
+        .sidebar {
+            width: 350px;
+            background: rgba(255,255,255,0.95);
+            padding: 30px;
+            overflow-y: auto;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+        }
+
+        h1 {
+            color: #5a67d8;
+            margin-bottom: 20px;
+            font-size: 28px;
+        }
+
+        h2 {
+            color: #2d3748;
+            margin-top: 20px;
+            margin-bottom: 10px;
+            font-size: 18px;
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 5px;
+        }
+
+        .legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 5px 10px;
+            background: #f7fafc;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            border: 2px solid #e2e8f0;
+        }
+
+        .controls {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        button {
+            background: #5a67d8;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.3s;
+        }
+
+        button:hover {
+            background: #4c51bf;
+        }
+
+        .info-box {
+            background: #f7fafc;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 20px;
+            display: none;
+        }
+
+        .info-box.active {
+            display: block;
+        }
+
+        .info-box h3 {
+            color: #2d3748;
+            margin-bottom: 10px;
+            font-size: 16px;
+        }
+
+        .info-box p {
+            color: #4a5568;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .stat {
+            background: #edf2f7;
+            padding: 10px;
+            border-radius: 5px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #5a67d8;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #718096;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="sidebar">
+            <h1>MAOF Architecture</h1>
+            
+            <h2>Legend</h2>
+            <div class="legend">
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #667eea;"></div>
+                    <span>Core Components</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #48bb78;"></div>
+                    <span>AI Agents</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #ed8936;"></div>
+                    <span>Security Layer</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #38b2ac;"></div>
+                    <span>Data Flow</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #9f7aea;"></div>
+                    <span>Monitoring</span>
+                </div>
+            </div>
+
+            <h2>View Controls</h2>
+            <div class="controls">
+                <button onclick="showFullArchitecture()">Full Architecture</button>
+                <button onclick="showAgentFlow()">Agent Flow</button>
+                <button onclick="showDataFlow()">Data Flow</button>
+                <button onclick="showSecurityLayer()">Security View</button>
+                <button onclick="resetView()">Reset View</button>
+            </div>
+
+            <h2>System Statistics</h2>
+            <div class="stats">
+                <div class="stat">
+                    <div class="stat-value">15</div>
+                    <div class="stat-label">Components</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value">10+</div>
+                    <div class="stat-label">AI Agents</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value">5</div>
+                    <div class="stat-label">Patterns</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value">∞</div>
+                    <div class="stat-label">Scalability</div>
+                </div>
+            </div>
+
+            <div id="nodeInfo" class="info-box">
+                <h3>Component Details</h3>
+                <p id="nodeDescription">Click on any node to see details.</p>
+            </div>
+        </div>
+
+        <div id="cy"></div>
+    </div>
+
+    <script>
+        // Initialize Cytoscape
+        var cy = cytoscape({
+            container: document.getElementById('cy'),
+            
+            style: [
+                {
+                    selector: 'node',
+                    style: {
+                        'label': 'data(label)',
+                        'text-valign': 'center',
+                        'text-halign': 'center',
+                        'background-color': 'data(color)',
+                        'color': '#fff',
+                        'text-outline-width': 2,
+                        'text-outline-color': 'data(color)',
+                        'font-size': '12px',
+                        'width': 'data(size)',
+                        'height': 'data(size)',
+                        'border-width': 3,
+                        'border-color': '#fff',
+                        'font-weight': 'bold'
+                    }
+                },
+                {
+                    selector: 'edge',
+                    style: {
+                        'width': 2,
+                        'line-color': '#38b2ac',
+                        'target-arrow-color': '#38b2ac',
+                        'target-arrow-shape': 'triangle',
+                        'curve-style': 'bezier',
+                        'label': 'data(label)',
+                        'font-size': '10px',
+                        'text-rotation': 'autorotate',
+                        'text-background-color': '#fff',
+                        'text-background-opacity': 0.8,
+                        'text-background-padding': '2px'
+                    }
+                },
+                {
+                    selector: '.highlighted',
+                    style: {
+                        'background-color': '#ff6b6b',
+                        'line-color': '#ff6b6b',
+                        'target-arrow-color': '#ff6b6b',
+                        'transition-property': 'background-color, line-color, target-arrow-color',
+                        'transition-duration': '0.3s'
+                    }
+                }
+            ],
+
+            layout: {
+                name: 'cose',
+                idealEdgeLength: 100,
+                nodeOverlap: 20,
+                refresh: 20,
+                fit: true,
+                padding: 30,
+                randomize: false,
+                componentSpacing: 100,
+                nodeRepulsion: 400000,
+                edgeElasticity: 100,
+                nestingFactor: 5,
+                gravity: 80,
+                numIter: 1000,
+                initialTemp: 200,
+                coolingFactor: 0.95,
+                minTemp: 1.0
+            }
+        });
+
+        // Define nodes data
+        const nodesData = {
+            // Core Components
+            'orchestrator': {
+                label: 'Orchestration\nEngine',
+                color: '#667eea',
+                size: 80,
+                description: 'Central orchestration engine that manages task distribution, workflow execution, and agent coordination.'
+            },
+            'registry': {
+                label: 'Agent\nRegistry',
+                color: '#667eea',
+                size: 70,
+                description: 'Maintains catalog of all available AI agents with their capabilities, versions, and status.'
+            },
+            'router': {
+                label: 'Intelligent\nRouter',
+                color: '#667eea',
+                size: 70,
+                description: 'Routes tasks to optimal agents based on capabilities, cost, performance, and availability.'
+            },
+            'context': {
+                label: 'Context\nManager',
+                color: '#667eea',
+                size: 70,
+                description: 'Maintains conversation history, session state, and shared memory across agent interactions.'
+            },
+            'aggregator': {
+                label: 'Result\nAggregator',
+                color: '#667eea',
+                size: 70,
+                description: 'Combines and synthesizes outputs from multiple agents into unified responses.'
+            },
+            
+            // AI Agents
+            'openai': {
+                label: 'OpenAI\nGPT-4',
+                color: '#48bb78',
+                size: 60,
+                description: 'OpenAI GPT-4 for general reasoning, creativity, and complex tasks.'
+            },
+            'claude': {
+                label: 'Anthropic\nClaude',
+                color: '#48bb78',
+                size: 60,
+                description: 'Claude 3 for analysis, coding, and safety-focused responses.'
+            },
+            'gemini': {
+                label: 'Google\nGemini',
+                color: '#48bb78',
+                size: 60,
+                description: 'Gemini Pro for multimodal processing and search integration.'
+            },
+            'deepseek': {
+                label: 'DeepSeek\nCoder',
+                color: '#48bb78',
+                size: 60,
+                description: 'Specialized model for code generation and debugging.'
+            },
+            'huggingface': {
+                label: 'HuggingFace\nModels',
+                color: '#48bb78',
+                size: 60,
+                description: 'Collection of specialized models from HuggingFace ecosystem.'
+            },
+            
+            // Security & Governance
+            'auth': {
+                label: 'Auth\nGateway',
+                color: '#ed8936',
+                size: 60,
+                description: 'Handles authentication, API key management, and access control.'
+            },
+            'monitor': {
+                label: 'Performance\nMonitor',
+                color: '#9f7aea',
+                size: 60,
+                description: 'Tracks metrics, latency, costs, and system performance.'
+            },
+            
+            // Data Layer
+            'queue': {
+                label: 'Message\nQueue',
+                color: '#38b2ac',
+                size: 60,
+                description: 'Asynchronous task distribution and event streaming.'
+            },
+            'cache': {
+                label: 'Cache\nLayer',
+                color: '#38b2ac',
+                size: 60,
+                description: 'Redis cache for response caching and session storage.'
+            },
+            'database': {
+                label: 'Vector\nDatabase',
+                color: '#38b2ac',
+                size: 60,
+                description: 'Stores embeddings and enables semantic search across conversations.'
+            }
+        };
+
+        // Add nodes to graph
+        Object.keys(nodesData).forEach(id => {
+            cy.add({
+                data: {
+                    id: id,
+                    ...nodesData[id]
+                }
+            });
+        });
+
+        // Define edges
+        const edges = [
+            // Orchestrator connections
+            { source: 'orchestrator', target: 'registry', label: 'discover' },
+            { source: 'orchestrator', target: 'router', label: 'route' },
+            { source: 'orchestrator', target: 'context', label: 'context' },
+            { source: 'orchestrator', target: 'queue', label: 'tasks' },
+            
+            // Router to agents
+            { source: 'router', target: 'openai', label: 'delegate' },
+            { source: 'router', target: 'claude', label: 'delegate' },
+            { source: 'router', target: 'gemini', label: 'delegate' },
+            { source: 'router', target: 'deepseek', label: 'delegate' },
+            { source: 'router', target: 'huggingface', label: 'delegate' },
+            
+            // Agent responses
+            { source: 'openai', target: 'aggregator', label: 'response' },
+            { source: 'claude', target: 'aggregator', label: 'response' },
+            { source: 'gemini', target: 'aggregator', label: 'response' },
+            { source: 'deepseek', target: 'aggregator', label: 'response' },
+            { source: 'huggingface', target: 'aggregator', label: 'response' },
+            
+            // Data flow
+            { source: 'aggregator', target: 'cache', label: 'store' },
+            { source: 'context', target: 'database', label: 'persist' },
+            { source: 'auth', target: 'orchestrator', label: 'authorize' },
+            { source: 'monitor', target: 'orchestrator', label: 'metrics' },
+            
+            // Queue connections
+            { source: 'queue', target: 'router', label: 'tasks' },
+            { source: 'aggregator', target: 'orchestrator', label: 'results' }
+        ];
+
+        // Add edges to graph
+        edges.forEach(edge => {
+            cy.add({
+                data: {
+                    id: `${edge.source}-${edge.target}`,
+                    ...edge
+                }
+            });
+        });
+
+        // Event handlers
+        cy.on('tap', 'node', function(evt) {
+            const node = evt.target;
+            const nodeId = node.id();
+            const nodeData = nodesData[nodeId];
+            
+            document.getElementById('nodeInfo').classList.add('active');
+            document.getElementById('nodeDescription').innerHTML = `
+                <strong>${nodeData.label.replace(/\\n/g, ' ')}</strong><br><br>
+                ${nodeData.description}
+            `;
+            
+            // Highlight connected edges and nodes
+            cy.elements().removeClass('highlighted');
+            node.addClass('highlighted');
+            node.connectedEdges().addClass('highlighted');
+            node.neighborhood().addClass('highlighted');
+        });
+
+        // View control functions
+        function showFullArchitecture() {
+            cy.elements().show();
+            cy.layout({ name: 'cose' }).run();
+        }
+
+        function showAgentFlow() {
+            cy.elements().hide();
+            cy.nodes('#router, #openai, #claude, #gemini, #deepseek, #huggingface, #aggregator').show();
+            cy.edges('[source = "router"], [target = "aggregator"]').show();
+            cy.layout({ name: 'circle' }).run();
+        }
+
+        function showDataFlow() {
+            cy.elements().hide();
+            cy.nodes('#orchestrator, #context, #queue, #cache, #database, #aggregator').show();
+            cy.edges('[source = "orchestrator"], [target = "orchestrator"], [source = "context"], [target = "cache"], [target = "database"]').show();
+            cy.layout({ name: 'breadthfirst', directed: true }).run();
+        }
+
+        function showSecurityLayer() {
+            cy.elements().hide();
+            cy.nodes('#auth, #monitor, #orchestrator, #router').show();
+            cy.edges('[source = "auth"], [source = "monitor"]').show();
+            cy.layout({ name: 'grid' }).run();
+        }
+
+        function resetView() {
+            cy.elements().removeClass('highlighted');
+            document.getElementById('nodeInfo').classList.remove('active');
+            cy.fit();
+        }
+
+        // Initialize with full view
+        showFullArchitecture();
+    </script>
+</body>
+</html>

@@ -336,7 +336,9 @@ Compatible with:
 
 ## 📝 License
 
-This framework is provided as an educational resource and template. Please ensure compliance with all third-party API terms of service when implementing.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+Please ensure compliance with all third-party API terms of service when implementing.
 
 ---
 

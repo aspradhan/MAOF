@@ -1,0 +1,175 @@
+# Research Agent Template
+# Purpose: Research topics and generate comprehensive summaries
+# Best for: Academic research, market research, competitive analysis
+
+agent:
+  name: "research-agent"
+  version: "1.0.0"
+  description: "AI assistant that researches topics using web search and generates structured summaries"
+
+  # Model Configuration
+  model:
+    provider: "openai"  # or "anthropic", "google"
+    model: "gpt-4"
+    temperature: 0.3    # Lower for more factual
+    max_tokens: 4000
+
+  # Capabilities
+  capabilities:
+    - web_search
+    - document_analysis
+    - summarization
+    - citation_generation
+
+  # System Instructions
+  instructions: |
+    You are a professional research assistant. When given a research topic:
+
+    1. SEARCH: Use web search to find relevant, credible sources
+    2. ANALYZE: Evaluate source credibility and relevance
+    3. SYNTHESIZE: Extract key findings and insights
+    4. STRUCTURE: Organize information logically
+    5. CITE: Provide proper citations for all sources
+
+    Output Format:
+    - Executive Summary (2-3 sentences)
+    - Key Findings (bullet points)
+    - Detailed Analysis (paragraphs)
+    - Sources (numbered list with URLs)
+
+    Quality Standards:
+    - Use only credible sources (academic, established media, official sites)
+    - Verify facts across multiple sources
+    - Distinguish facts from opinions
+    - Note any conflicting information
+    - Indicate confidence level for each finding
+
+  # Input Schema
+  input_schema:
+    type: object
+    required:
+      - topic
+    properties:
+      topic:
+        type: string
+        description: "Research topic or question"
+      depth:
+        type: string
+        enum: ["quick", "standard", "comprehensive"]
+        default: "standard"
+      max_sources:
+        type: integer
+        default: 10
+        minimum: 3
+        maximum: 50
+
+  # Output Schema
+  output_schema:
+    type: object
+    properties:
+      summary:
+        type: string
+        description: "Executive summary of findings"
+      key_findings:
+        type: array
+        items:
+          type: string
+      analysis:
+        type: string
+        description: "Detailed analysis"
+      sources:
+        type: array
+        items:
+          type: object
+          properties:
+            title: string
+            url: string
+            credibility: string
+            date_accessed: string
+      confidence:
+        type: string
+        enum: ["high", "medium", "low"]
+
+  # Resource Constraints
+  constraints:
+    max_cost_per_request: 0.50  # $0.50
+    max_execution_time_seconds: 120
+
+  # Policies
+  policies:
+    - name: "source-verification"
+      rule: "All claims must be backed by at least 2 sources"
+    - name: "bias-detection"
+      rule: "Flag potential bias in sources"
+    - name: "data-retention"
+      rule: "Delete research data after 30 days"
+
+  # Tags
+  tags:
+    - research
+    - analysis
+    - web-search
+    - production-ready
+
+  # Error Handling
+  error_handling:
+    on_search_failure:
+      action: "retry"
+      max_retries: 3
+      fallback: "Use cached/existing knowledge"
+    on_timeout:
+      action: "return_partial_results"
+      include_progress: true
+
+  # Observability
+  observability:
+    log_level: "info"
+    emit_metrics:
+      - execution_time
+      - sources_consulted
+      - cost
+      - confidence_score
+    trace_external_calls: true
+
+  # Testing
+  test_cases:
+    - name: "simple_research"
+      input:
+        topic: "What is quantum computing?"
+        depth: "quick"
+      expected:
+        summary_length_min: 50
+        sources_count_min: 3
+        confidence: "high"
+
+    - name: "comprehensive_research"
+      input:
+        topic: "Impact of AI on healthcare 2024"
+        depth: "comprehensive"
+        max_sources: 20
+      expected:
+        summary_length_min: 200
+        sources_count_min: 15
+        key_findings_count_min: 10
+
+# Usage Example
+example_usage: |
+  # Create agent in OrchaMesh
+  agent = await orchamesh.agents.create_from_template(
+    template="research-agent",
+    customizations={
+      "model": {"model": "gpt-4-turbo"},
+      "constraints": {"max_cost_per_request": 1.00}
+    }
+  )
+
+  # Execute research task
+  result = await agent.execute({
+    "topic": "Latest developments in renewable energy",
+    "depth": "comprehensive",
+    "max_sources": 15
+  })
+
+  print(result.summary)
+  print(f"Sources consulted: {len(result.sources)}")
+  print(f"Confidence: {result.confidence}")

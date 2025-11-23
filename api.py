@@ -9,11 +9,25 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from typing import Dict, Any, Optional
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
+from contextlib import asynccontextmanager
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger('MAOF-API')
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Lifespan event handler for startup and shutdown."""
+    # Startup
+    logger.info("MAOF API starting up...")
+    logger.info("Version: 3.0.0")
+    logger.info("Framework type: Best Practices")
+    yield
+    # Shutdown
+    logger.info("MAOF API shutting down...")
+
 
 # Create FastAPI app
 app = FastAPI(
@@ -21,7 +35,8 @@ app = FastAPI(
     description="Best practices framework for OrchaMesh and multi-agent systems",
     version="3.0.0",
     docs_url="/docs",
-    redoc_url="/redoc"
+    redoc_url="/redoc",
+    lifespan=lifespan
 )
 
 
@@ -39,7 +54,7 @@ async def health_check() -> Dict[str, Any]:
         "status": "healthy",
         "service": "MAOF",
         "version": "3.0.0",
-        "timestamp": datetime.utcnow().isoformat(),
+        "timestamp": datetime.now(timezone.utc).isoformat(),
         "framework": "best-practices"
     }
 
@@ -61,24 +76,6 @@ async def root() -> Dict[str, Any]:
         "framework_type": "best-practices",
         "integration": "OrchaMesh"
     }
-
-
-# ============================================================================
-# Startup and Shutdown Events
-# ============================================================================
-
-@app.on_event("startup")
-async def startup_event():
-    """Execute startup tasks."""
-    logger.info("MAOF API starting up...")
-    logger.info("Version: 3.0.0")
-    logger.info("Framework type: Best Practices")
-
-
-@app.on_event("shutdown")
-async def shutdown_event():
-    """Execute cleanup tasks."""
-    logger.info("MAOF API shutting down...")
 
 
 # ============================================================================

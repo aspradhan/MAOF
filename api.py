@@ -4,7 +4,7 @@ FastAPI Application
 Version: 3.0
 """
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from typing import Dict, Any, Optional
@@ -83,7 +83,7 @@ async def root() -> Dict[str, Any]:
 # ============================================================================
 
 @app.exception_handler(404)
-async def not_found_handler(request, exc):
+async def not_found_handler(request: Request, exc: Exception):
     """Handle 404 errors."""
     return JSONResponse(
         status_code=404,
@@ -96,7 +96,7 @@ async def not_found_handler(request, exc):
 
 
 @app.exception_handler(500)
-async def internal_error_handler(request, exc):
+async def internal_error_handler(request: Request, exc: Exception):
     """Handle 500 errors."""
     logger.error(f"Internal server error: {exc}")
     return JSONResponse(
